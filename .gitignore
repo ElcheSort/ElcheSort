@@ -1,3 +1,15 @@
+# Custom ignore
+blackrock_utilities
+*nix
+*ns5
+*nev
+*png
+*zip
+*svg
+*png
+*pdf
+sandbox
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[codz]
