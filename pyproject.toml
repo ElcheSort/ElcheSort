@@ -1,0 +1,34 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "elchesort"
+version = "0.1.0"
+description = "A simple spike sorting library for single-channel sorting with template matching and isosplit clustering."
+readme = "README.md"
+license = "GPL-3.0-or-later"
+authors = [
+    {name = "Aitor Morales-Gregorio"}
+]
+requires-python = ">=3.9"
+dependencies = [
+    "torch",
+    "numpy",
+    "scipy",
+    "scikit-learn",
+    "neo",
+    "quantities",
+    "elephant",
+    "statsmodels",
+    "isosplit6",
+    "matplotlib",
+    "pikepdf",
+    "tqdm",
+]
+
+[project.optional-dependencies]
+dev = ["pytest", "flake8"]
+
+[tool.setuptools.packages.find]
+include = ["elchesort*"]
