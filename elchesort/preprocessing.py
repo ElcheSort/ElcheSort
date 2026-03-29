@@ -87,7 +87,8 @@ def bandpass_filter(signals, sampling_rate,
     return signals
 
 
-def whiten_signals(signals, noise_threshold=3, device=torch.device('cpu')):
+def whiten_signals(signals, noise_threshold=3, device=torch.device('cpu'),
+                   return_whitening_matrix=False):
     """
     ZCA whitening based on background noise periods.
     
@@ -129,6 +130,9 @@ def whiten_signals(signals, noise_threshold=3, device=torch.device('cpu')):
     U, S, _ = torch.linalg.svd(cov)
     whiten_matrix = U @ (U / torch.sqrt(S + 1e-5)).T
     signals = (signals.T @ whiten_matrix).T
-        
-    return signals
+    
+    if return_whitening_matrix:
+        return signals, whiten_matrix
+    else:
+        return signals
 
