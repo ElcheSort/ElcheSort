@@ -2,7 +2,9 @@
 
 A minimalistic spike sorting algorithm for sorting electrodes one at a time.
 
-ElcheSort detects spikes via template matching, extracts aligned waveforms, projects them into PCA space, and clusters them with [ISO-SPLIT](https://github.com/flatironinstitute/isosplit6). The entire sorting pipeline for a single channel is about 250 lines of code.
+![Example report page](resources/report_example.png)
+
+ElcheSort detects spikes via template matching, extracts aligned waveforms, projects them into PCA space, and clusters them with [iso-split](https://github.com/flatironinstitute/isosplit6). The entire sorting pipeline is about 250 lines of code.
 
 ## Installation
 
@@ -55,9 +57,8 @@ generate_pdf_report(spiketrains, 'my_report.pdf', channel_key='channel_ids', lab
 
 The report assumes that spiketrains is a list of `neo.SpikeTrain` objects, with annotations for channels (`channel_key` kwarg), `label_key` and `title_key` are used to pass on which annotations (if any) should be used for the page title (e.g. the session name, or date) and the legend keys (e.g. labels for SUA, MUA etc).
 
-Example report page:
+An example report page for one electrode is shown above.
 
-![Example report page](report_example.png)
 
 ## Project structure
 
