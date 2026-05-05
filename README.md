@@ -4,7 +4,10 @@ A minimalistic spike sorting algorithm for sorting electrodes one at a time.
 
 ![Example report page](resources/report_example.png)
 
-ElcheSort detects spikes via template matching, extracts aligned waveforms, projects them into PCA space, and clusters them with [iso-split](https://github.com/flatironinstitute/isosplit6). The entire sorting pipeline is about 250 lines of code.
+ElcheSort detects spikes via template matching, extracts aligned waveforms, projects them into PCA space, and clusters them with [iso-split](https://github.com/flatironinstitute/isosplit6).
+
+ElcheSort uses a collation of methods from other sorters specifically applied to single-channel recordings, or for cases where neurons are not observable from multiple channels (e.g. Utah arrays with 400um separation). ElcheSort can detect units in recordings as short as one minute, although longer recordings are recommended for better performance.
+
 
 ## Installation
 
@@ -19,6 +22,10 @@ pip install -e .
 Use the `-e` flag to install elchesort in development mode and adjust any parts as needed.
 
 ## Usage
+
+See `example_elchesort_pipeline.py` for a full sorting workflow, users have to plug in the data loading and metadata handling.
+
+This is a very minimal workflow:
 
 ```python
 from elchesort import spike_sort_channel, bandpass_filter, whiten_signals
