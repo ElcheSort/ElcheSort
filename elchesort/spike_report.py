@@ -99,7 +99,14 @@ def generate_report_page(spiketrain_lst, colors, events=None, channel_key='chann
 
     # Labels and titles
     first_ann = unit_data[0]['annotations']
-    fig.suptitle(f"{first_ann['session']}, Channel {first_ann[channel_key]}")
+    title = f"Channel {first_ann[channel_key]}"
+    if title_key is not None:
+        value = first_ann.get(title_key)
+        if value is None:
+            warnings.warn(f"Title key '{title_key}' not found in annotations.")
+        else:
+            title = f"{value}, {title}"
+    fig.suptitle(title)
     
     ax1.set(ylabel=r'$\Delta$V from baseline (std)', xlabel='Relative time (ms)', title='Waveforms')
     xticks = np.arange(0, 91, step=15)
@@ -184,14 +191,16 @@ def generate_report_page(spiketrain_lst, colors, events=None, channel_key='chann
             ax3.add_collection(pc)
 
     # Legend
-    patches = [
-        mpatches.Patch(
-            color=colors[i % len(colors)],
-            label=f"{i} (ch{ud['annotations'][channel_key]} {ud['name']}) Label: '{ud['annotations']['Label']}'",
-            alpha=0.5
-        )
-        for i, ud in enumerate(unit_data)
-    ]
+        patches = []
+        for i, ud in enumerate(unit_data):
+            label = f"{i} (ch{ud['annotations'][channel_key]} {ud['name']})"
+            if label_key is not None:
+                value = ud['annotations'].get(label_key)
+                if value is None:
+                    warnings.warn(f"Label key '{label_key}' not found in annotations for unit {i}.")
+                else:
+                    label += f" Label: '{value}'"
+            patches.append(mpatches.Patch(color=colors[i % len(colors)], label=label, alpha=0.5))
     ax8.legend(handles=patches, loc='center', bbox_to_anchor=(0.3, 0.5))
 
     # Force rasterization
@@ -201,7 +210,9 @@ def generate_report_page(spiketrain_lst, colors, events=None, channel_key='chann
     return fig
 
 
-def generate_pdf_report(spiketrains, report_pdf, colors=None, channel_key='channel_id', events=None):
+def generate_pdf_report(spiketrains, report_pdf, colors=None,
+                        channel_key='channel_id', label_key='Label', 
+                        title_key='session', events=None):
     """
     Generate a PDF report with one page per channel.
     
