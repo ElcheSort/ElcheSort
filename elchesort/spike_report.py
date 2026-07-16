@@ -18,9 +18,11 @@ import elephant
 from matplotlib.backends.backend_pdf import PdfPages
 import pikepdf
 from tqdm import tqdm
+from elchesort.utils import waveform_amp_and_width
+import warnings
 
 
-DEFAULT_COLORS = ['b', 'r', 'g', 'orange', 'darkviolet', 'gold', 'k']
+DEFAULT_COLORS = ['blue', 'red', 'green', 'orange', 'darkviolet', 'gold', 'black']
 
 
 def clean_axes(ax, spines_to_hide=('top', 'right'), hide_ticks=None):
@@ -41,7 +43,7 @@ def plot_waveforms_fast(ax, waveforms, color, alpha=0.05, lw=0.5):
     ax.add_collection(LineCollection(segments, colors=color, alpha=alpha, linewidths=lw))
 
 
-def generate_report_page(spiketrain_lst, colors, events=None, channel_key='channel_id'):
+def generate_report_page(spiketrain_lst, colors, events=None, channel_key='channel_id', label_key='Label', title_key='session'):
     """
     Creates summary plot for a list of given spiketrains (ideally from a single electrode).
     
@@ -59,11 +61,14 @@ def generate_report_page(spiketrain_lst, colors, events=None, channel_key='chann
     unit_data = []
     for st in spiketrain_lst:
         wvf = np.asarray(st.waveforms[:, :])
+
+        amps, widths = waveform_amp_and_width(wvf)
+
         unit_data.append({
             'waveforms': wvf,
             'mean_wvf': np.mean(wvf, axis=0),
-            'amplitudes': np.ptp(wvf, axis=1),
-            'widths': np.abs(np.argmax(wvf, axis=1) - np.argmin(wvf, axis=1)) / 30,
+            'amplitudes': amps,
+            'widths': widths,
             'times_s': np.asarray(st.times.rescale('s').magnitude),
             'isi': np.asarray(elephant.statistics.isi(st).rescale('ms').magnitude),
             't_start': float(st.t_start.rescale('s').magnitude),
@@ -191,16 +196,16 @@ def generate_report_page(spiketrain_lst, colors, events=None, channel_key='chann
             ax3.add_collection(pc)
 
     # Legend
-        patches = []
-        for i, ud in enumerate(unit_data):
-            label = f"{i} (ch{ud['annotations'][channel_key]} {ud['name']})"
-            if label_key is not None:
-                value = ud['annotations'].get(label_key)
-                if value is None:
-                    warnings.warn(f"Label key '{label_key}' not found in annotations for unit {i}.")
-                else:
-                    label += f" Label: '{value}'"
-            patches.append(mpatches.Patch(color=colors[i % len(colors)], label=label, alpha=0.5))
+    patches = []
+    for i, ud in enumerate(unit_data):
+        label = f"{i} (ch{ud['annotations'][channel_key]} {ud['name']})"
+        if label_key is not None:
+            value = ud['annotations'].get(label_key)
+            if value is None:
+                warnings.warn(f"Label key '{label_key}' not found in annotations for unit {i}.")
+            else:
+                label += f" Label: '{value}'"
+        patches.append(mpatches.Patch(color=colors[i % len(colors)], label=label, alpha=0.5))
     ax8.legend(handles=patches, loc='center', bbox_to_anchor=(0.3, 0.5))
 
     # Force rasterization
@@ -242,7 +247,10 @@ def generate_pdf_report(spiketrains, report_pdf, colors=None,
     
     with PdfPages(uncompressed_report_pdf) as pdf:
         for ch, sts in tqdm(sts_by_ch.items()):
-            fig = generate_report_page(sts, colors, events=events, channel_key=channel_key)
+            fig = generate_report_page(sts, colors, events=events,
+                                       channel_key=channel_key,
+                                       label_key=label_key,
+                                       title_key=title_key)
             pdf.savefig(fig, dpi=150)
             plt.close('all')
 
