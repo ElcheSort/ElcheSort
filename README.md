@@ -82,6 +82,24 @@ elchesort/
 
 PyTorch, NumPy, SciPy, scikit-learn, neo, elephant, quantities, isosplit6, statsmodels, matplotlib, pikepdf, tqdm.
 
+## Citation policy
+
+If you use ElcheSort in your research, please cite it using the DOI below, which always points to the latest version.
+
+Morales-Gregorio A. (2026). ElcheSort. Zenodo https://doi.org/10.5281/zenodo.23019160
+
+For reproducibility, please also mention the specific version you used.
+
+```bibtex
+@software{elchesort,
+  author    = {Morales-Gregorio, Aitor},
+  title     = {ElcheSort},
+  year      = {2026},
+  publisher = {Zenodo},
+  doi       = {10.5281/zenodo.23019160}
+}
+```
+
 ## License
 
 GPL-3.0. See [LICENSE](LICENSE) for details.
