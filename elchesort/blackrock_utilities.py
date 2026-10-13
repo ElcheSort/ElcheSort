@@ -15,10 +15,8 @@ import numpy as np
 from collections import namedtuple
 from datetime import datetime
 from math import ceil
-from os import getcwd, path as ospath
+from os import path as ospath
 from struct import calcsize, pack, unpack, unpack_from
-
-from qtpy.QtWidgets import QFileDialog, QApplication
 
 # Patch for Python 2.6+
 try:
@@ -115,36 +113,25 @@ EXIT_EVENT              = 2
 
 def openfilecheck(open_mode, file_name='', file_ext='', file_type=''):
     """
+    Open a Blackrock file. A path must be given, there is no interactive prompt or GUI dialog.
+
     :param open_mode: {str} method to open the file (e.g., 'rb' for binary read only)
-    :param file_name: [optional] {str} full path of file to open
-    :param file_ext:  [optional] {str} file extension (e.g., '.nev')
-    :param file_type: [optional] {str} file type for use when browsing for file (e.g., 'Blackrock NEV Files')
+    :param file_name: {str} full path of file to open
+    :param file_ext:  [optional] {str} expected file extension (e.g., '.nev' or '.ns*')
+    :param file_type: [optional] {str} file type, only used in error messages (e.g., 'Blackrock NEV Files')
     :return: {file} opened file
     """
-    while True:
-        if not file_name:
-            file_name = input("Enter complete " + file_ext + " file path or hit enter to browse: ")
+    if not file_name:
+        raise ValueError("No " + (file_type or "file") + " path given")
 
-            if not file_name:
-                if 'app' not in locals():
-                    app = QApplication([])
-                if not file_ext:
-                    file_type = 'All Files'
-                file_name = QFileDialog.getOpenFileName(
-                    QFileDialog(), "Select File", getcwd(), file_type + " (*" + file_ext + ")")
+    if not ospath.isfile(file_name):
+        raise FileNotFoundError(file_name)
 
-        if ospath.isfile(file_name):
-            if file_ext:
-                _, fext = ospath.splitext(file_name)
-                test_extension = file_ext[:-1] if file_ext[-1] == '*' else file_ext
-                if fext[:len(test_extension)] != test_extension:
-                    file_name = ''
-                    print("\n*** File given is not a " + file_ext + " file, try again ***\n")
-                    continue
-            break
-        else:
-            file_name = ''
-            print("\n*** File given does exist, try again ***\n")
+    if file_ext:
+        _, fext = ospath.splitext(file_name)
+        test_extension = file_ext[:-1] if file_ext[-1] == '*' else file_ext
+        if fext[:len(test_extension)] != test_extension:
+            raise ValueError(file_name + " is not a " + file_ext + " file")
 
     return open(file_name, open_mode)
 
@@ -539,8 +526,9 @@ class NevFile:
             ROIPackets = [idx for idx, el in enumerate(charSet) if el == CHARSET_ROI]
 
             lcomment = self.basic_header['BytesInDataPackets'] - tsBytes - 10
-            comments = np.chararray(
-                (nPackets, lcomment), 1, False, rawdata, tsBytes + 10,
+            # Plain 1-byte string array (np.chararray is deprecated and gone from the numpy namespace)
+            comments = np.ndarray(
+                (nPackets, lcomment), 'S1', rawdata, tsBytes + 10,
                 (self.basic_header['BytesInDataPackets'], 1))
 
             # Extract "true" comments (not ROI packets)
@@ -548,7 +536,7 @@ class NevFile:
             trueCommentsidx = np.asarray(commentPackets)[trueComments]
             textComments    = comments[trueCommentsidx]
             textComments[:, -1] = '$'
-            stringarray  = textComments.tostring()
+            stringarray  = textComments.tobytes()
             stringvector = stringarray.decode('latin-1')[:-1]
             validstrings = stringvector.replace('\x00', '')
             commentsFinal = validstrings.split('$')
@@ -566,7 +554,7 @@ class NevFile:
                 nmCommentsidx = np.asarray(commentPackets)[ROIPackets]
                 nmcomments = comments[nmCommentsidx]
                 nmcomments[:, -1] = ':'
-                nmstringarray  = nmcomments.tostring()
+                nmstringarray  = nmcomments.tobytes()
                 nmstringvector = nmstringarray.decode('latin-1')[:-1]
                 nmvalidstrings = nmstringvector.replace('\x00', '')
                 nmcommentsFinal = nmvalidstrings.split(':')
@@ -652,7 +640,7 @@ class NevFile:
             changeType = np.ndarray((nPackets,), '<H', rawdata, tsBytes + 4, stride)
             output['reconfig'] = {
                 'TimeStamps': list(ts[configPackets]),
-                'ChangeType': list(ts[configPackets])}
+                'ChangeType': list(changeType[configPackets])}
 
         return output
 
